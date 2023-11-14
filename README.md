@@ -268,4 +268,5 @@ To illustrate the capabilities of JupyterHub and MLflow, a code example was prov
 
 Before using MLflow, don't forget to install the Python package using pip install mlflow and restart the Jupyter kernel if necessary.
 
-In conclusion, this guide equips you with the knowledge and tools needed to set up a powerful MLOps environment using VAC, TAP, JupyterHub, and MLflow. It empowers you to explore the exciting world of AI and machine learning with confidence, whether you're a data scientist, developer, or IT professional.
+### For summarize, 
+this guide equips you with the knowledge and tools needed to set up a powerful MLOps environment using VAC, TAP, JupyterHub, and MLflow. It empowers you to explore the exciting world of AI and machine learning with confidence, whether you're a data scientist, developer, or IT professional.
