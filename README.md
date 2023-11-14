@@ -49,7 +49,7 @@ MLOps and DevOps are related concepts focused on streamlining and automating sof
 In summary, DevOps focuses on improving the software development and deployment process in general, while MLOps is tailored specifically to address the unique challenges of managing machine learning models and data in production environments.
 
 
-## JupyterHub Installation
+## JupyterHub
 
 JupyterHub is a web-based platform that enables multiple users to collaboratively create and work with Jupyter notebooks on a shared server. It offers a secure and customizable environment, supports multiple users, and is commonly used in education, research, and data analysis for its collaborative and interactive capabilities.
 
@@ -71,11 +71,96 @@ echo "JupyterHub URL: http://$SERVICE_IP/"
 echo Admin user: user
 echo Password: $(kubectl get secret --namespace jupyter jupyterhub-hub -o jsonpath="{.data['values\.yaml']}" | base64 -d | awk -F: '/password/ {gsub(/[ \t]+/, "", $2);print $2}')
 ```
-
 ### You can access Jupyter notebooks using a URL like this:
 
 ```bash
 http://20.67.149.113/user/user/lab/tree/opt/bitnami/jupyterhub-singleuser/Untitled.ipynb
+```
+
+### Test Jupyter Installation with a Deep Learning Model
+
+The code essentially demonstrates how to use a pre-trained deep learning model (MobileNetV2) to classify the content of an image fetched from a given URL and visualize the prediction along with the image.
+
+
+```code
+import requests
+from PIL import Image
+import numpy as np
+from io import BytesIO
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input, decode_predictions
+from tensorflow.keras.preprocessing.image import img_to_array
+import os
+
+
+# Télécharge une image depuis Internet
+def download_image(image_url):
+    response = requests.get(image_url)
+    if response.status_code == 200:
+        img = Image.open(BytesIO(response.content))
+        return img
+    else:
+        return None
+
+# Prédit le contenu de l'image
+def predict_image(model, img):
+    img_resized = img.resize((224, 224))
+    img_array = img_to_array(img_resized)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = preprocess_input(img_array)
+
+    predictions = model.predict(img_array)
+    return decode_predictions(predictions, top=1)[0][0]
+
+# URL de l'image
+image_url = 'https://www.fklein.me/download/iphone2.jpg'  # Remplacez avec l'URL de l'image que vous souhaitez analyser
+
+# Enregistrement du processus avec MLflow
+# Télécharge et analyse l'image
+img = download_image(image_url)
+if img is not None:
+    model = MobileNetV2(weights='imagenet')
+    prediction = predict_image(model, img)
+
+    # Affiche l'image et la prédiction
+    plt.imshow(img)
+    plt.axis('off')
+    plt.title(f"\nObject: {prediction[1]} \n\n Confiance in the prediction : {prediction[2]*100:.3f}%\n")
+    plt.show()
+else:
+    print("L'image n'a pas pu être téléchargée.")
+```
+
+### Prerequisite for MLflow
+For using MLflow, install the Python package:
+```bash
+pip install mlflow
+```
+Restart the kernel after installation in Jupyter UI.
+
+## MLFlow
+
+MLflow is a tool that helps people who work with machine learning (ML) to do their work more easily. It helps with tracking and organizing ML experiments, packaging code, and deploying ML models. It's useful for managing the entire ML process, from trying out ideas to putting models into real-world applications.
+
+### To install MLflow, use the following Helm command:
+
+```bash
+helm install mlflow oci://harbor.jkolaric.eu/vac-library/charts/redhatubi-8/mlflow -n mlflow --create-namespace
+```
+
+### Expose the MLflow service:
+
+```bash
+export SERVICE_IP=$(kubectl get svc --namespace mlflow mlflow-tracking --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
+echo "MLflow URL: http://$SERVICE_IP/"
+```
+
+### Login credentials:
+
+```bash
+echo Username: $(kubectl get secret --namespace mlflow mlflow-tracking -o jsonpath="{ .data.admin-user }" | base64 -d)
+echo Password: $(kubectl get secret --namespace mlflow mlflow-tracking -o jsonpath="{.data.admin-password }" | base64 -d)
 ```
 
 
